@@ -1,0 +1,18 @@
+{
+  "user": {
+    "1": {
+      "name": "Creep",
+      "description": "Just perfect and nothing else, LIT!",
+      "friend": "2"
+    },
+    "2": {
+      "name": "Alisa",
+      "description": "Checking this because someone else told me to"
+    },
+    "3": {
+      "name": "Nemnem",
+      "description": "Bladebladeblade",
+      "friend": "1"
+    }
+  }
+}

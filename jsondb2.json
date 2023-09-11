@@ -1,0 +1,36 @@
+{
+  "person": {
+    "0": {
+      "name": "Joni",
+      "contacts": [],
+      "balance": 20.0
+    },
+    "1": {
+      "name": "Juho",
+      "contacts": [],
+      "balance": 40.0
+    },
+    "2": {
+      "name": "Julius",
+      "contacts": [
+        1
+      ],
+      "balance": 0.0
+    },
+    "3": {
+      "name": "Antti",
+      "contacts": [
+        3
+      ],
+      "balance": 10.0
+    }
+  },
+  "bill": {
+    "0": {
+      "from_": 0,
+      "to": 1,
+      "amount": 5.0
+    }
+  },
+  "login": {}
+}

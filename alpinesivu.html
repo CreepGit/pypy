@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+    <script defer src="/alpinesivu.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alpine</title>
+</head>
+
+<body>
+    <h1 x-data="{ message: 'I ❤️ Alpine' }" x-text="message"></h1>
+    <div style="display:flex; gap: 20px;">
+        <div>
+            <div x-data="{num: 1}">
+                <span x-text="num"></span>
+                <button @click="num+=1">NAPPI</button>
+            </div>
+            <br />
+            <ul x-data="{ colors: ['Red', 'Orange', 'Yellow'], v: '--' }">
+                <template x-for="color in colors">
+                    <li x-text="color"></li>
+                </template>
+            </ul>
+            <br>
+        </div>
+        <div>
+            <div x-data>
+                <button class="treebutton" x-text="'🌲 ' + $store.trees.count" @click="$store.trees.add"></button>
+            </div>
+        </div>
+    </div>
+    <div x-data="{open: false}">
+        <button @click="open=!open" x-text="open?'Close':'Show'"></button>
+        <div x-show="open" x-transition>
+            <h3>Otsikko</h3>
+            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias vel
+                eum cumque
+            </p>
+            <div x-data="{num: 1}">
+                <span x-text="num"></span>
+                <button @click="num+=1">NAPPI</button>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div x-data="{ tab: 0, }">
+        <div class="tabs">
+            <button :class="tab==0?'active-tab':''" @click="tab=0">Tabs</button>
+            <button :class="tab==1?'active-tab':''" @click="tab=1">Stones</button>
+            <button :class="tab==2?'active-tab':''" @click="tab=2">Oceanics</button>
+        </div>
+        <div x-show="tab==0">
+            <h3>Tabs</h3>
+            <p>Tabs upon tabs, a digital maze unfolds. Each click opens new worlds—information, entertainment,
+                connection. Three tabs become portals to endless discoveries, as the web weaves its intricate tapestry
+                of knowledge and delight</p>
+        </div>
+        <div x-show="tab==1">
+            <h3>Stones</h3>
+            <p>In the realm of sticks and stones, tales unfold. Whispers of ancient battles echo through the trees,
+                where legends arise from splintered wood and crumbling stone, forever etched in nature's memory.</p>
+        </div>
+        <div x-show="tab==2">
+            <h3>Oceanics 🐋</h3>
+            <p>Across vast ocean depths, a majestic sea dragon roams. Its iridescent scales glisten beneath the sun,
+                embodying the untamed power of the seas. A mythical creature, captivating hearts with every graceful
+                wave it creates</p>
+            <p>Beneath the vast expanse of the oceanic realm, an enchanting world reveals itself. Teeming with vibrant
+                marine life, mysterious depths beckon exploration. Waves dance, secrets whisper, and the oceanic
+                symphony unfolds, captivating hearts with its timeless allure. </p>
+        </div>
+    </div>
+    <div x-data=" {search:'', all: false} " style="width: fit-content;">
+        <input type="text" x-model="search" :placeholder="'Search '+($store.things.items.length||0)+' elements'"
+            @input="$store.things.sortItems(search)">
+        <button x-text="all?'Show Fewer':'Show More'" @click="all=!all">Show All</button>
+        <ol class="list" :class="{listAll: all}">
+            <template x-for="item in $store.things.items" :key="item">
+                <li x-text="item"></li>
+            </template>
+        </ol>
+    </div>
+    <div style="width: 100%; max-width: 800px;">
+        <canvas id="acquisitions"></canvas>
+    </div>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('trees', {
+                count: Number(localStorage.getItem('treeCount') || 0),
+                save() {
+                    localStorage.setItem('treeCount', Alpine.store("trees").count)
+                },
+                add() {
+                    Alpine.store("trees").count += 1
+                    Alpine.store("trees").save()
+                },
+            });
+            Alpine.store('things', {
+                items: [
+                    "Animate Weapon",
+                    "Arctic Armour",
+                    "Artillery Ballista",
+                    "Barrage",
+                    "Bear Trap",
+                    "Blade Blast",
+                    "Blade Flurry",
+                    "Blade Vortex",
+                    "Bladefall",
+                    "Blast Rain",
+                    "Blink Arrow",
+                    "Blood Rage",
+                    "Burning Arrow",
+                    "Caustic Arrow",
+                    "Charged Dash",
+                    "Cobra Lash",
+                    "Cremation",
+                    "Cyclone",
+                    "Dash",
+                    "Desecrate",
+                    "Detonate Dead",
+                    "Double Strike",
+                    "Dual Strike",
+                    "Elemental Hit",
+                    "Ensnaring Arrow",
+                    "Ethereal Knives",
+                    "Explosive Arrow",
+                    "Explosive Trap",
+                    "Fire Trap",
+                    "Flamethrower Trap",
+                    "Flicker Strike",
+                    "Frenzy",
+                    "Frost Blades",
+                    "Galvanic Arrow",
+                    "Grace",
+                    "Haste",
+                    "Hatred",
+                    "Herald of Agony",
+                    "Herald of Ice",
+                    "Ice Shot",
+                    "Ice Trap",
+                    "Lacerate",
+                    "Lancing Steel",
+                    "Lightning Arrow",
+                    "Lightning Strike",
+                    "Mirror Arrow",
+                    "Pestilent Strike",
+                    "Phase Run",
+                    "Plague Bearer",
+                    "Poacher's Mark",
+                    "Precision",
+                    "Puncture",
+                    "Purity of Ice",
+                    "Rain of Arrows",
+                    "Reave",
+                    "Riposte",
+                    "Scourge Arrow",
+                    "Seismic Trap",
+                    "Shattering Steel",
+                    "Shrapnel Ballista",
+                    "Siege Ballista",
+                    "Smoke Mine",
+                    "Sniper's Mark",
+                    "Spectral Shield Throw",
+                    "Spectral Throw",
+                    "Split Arrow",
+                    "Splitting Steel",
+                    "Summon Ice Golem",
+                    "Temporal Chains",
+                    "Tornado Shot",
+                    "Toxic Rain",
+                    "Unearth",
+                    "Vaal Blade Vortex",
+                    "Vaal Burning Arrow",
+                    "Vaal Cyclone",
+                    "Vaal Detonate Dead",
+                    "Vaal Double Strike",
+                    "Vaal Grace",
+                    "Vaal Haste",
+                    "Vaal Impurity of Ice",
+                    "Vaal Lightning Strike",
+                    "Vaal Rain of Arrows",
+                    "Vaal Reave",
+                    "Vaal Spectral Throw",
+                    "Venom Gyre",
+                    "Viper Strike",
+                    "Volatile Dead",
+                    "Whirling Blades",
+                    "Wild Strike",
+                    "Withering Step",
+                    "Ancestral Cry",
+                    "Ancestral Protector",
+                    "Ancestral Warchief",
+                    "Anger",
+                    "Animate Guardian",
+                    "Berserk",
+                    "Bladestorm",
+                    "Blood and Sand",
+                    "Chain Hook",
+                    "Cleave",
+                    "Consecrated Path",
+                    "Decoy Totem",
+                    "Determination",
+                    "Devouring Totem",
+                    "Dominating Blow",
+                    "Dread Banner",
+                    "Earthquake",
+                    "Earthshatter",
+                    "Enduring Cry",
+                    "Exsanguinate",
+                    "Flesh and Stone",
+                    "General's Cry",
+                    "Glacial Hammer",
+                    "Ground Slam",
+                    "Heavy Strike",
+                    "Herald of Ash",
+                    "Herald of Purity",
+                    "Holy Flame Totem",
+                    "Ice Crash",
+                    "Immortal Call",
+                    "Infernal Blow",
+                    "Infernal Cry",
+                    "Intimidating Cry",
+                    "Leap Slam",
+                    "Molten Shell",
+                    "Molten Strike",
+                    "Perforate",
+                    "Petrified Blood",
+                    "Pride",
+                    "Punishment",
+                    "Purity of Fire",
+                    "Rallying Cry",
+                    "Reap",
+                    "Reckoning",
+                    "Rejuvenation Totem",
+                    "Searing Bond",
+                    "Seismic Cry",
+                    "Shield Charge",
+                    "Shockwave Totem",
+                    "Smite",
+                    "Static Strike",
+                    "Steelskin",
+                    "Summon Flame Golem",
+                    "Summon Stone Golem",
+                    "Sunder",
+                    "Sweep",
+                    "Tectonic Slam",
+                    "Vaal Ancestral Warchief",
+                    "Vaal Earthquake",
+                    "Vaal Glacial Hammer",
+                    "Vaal Ground Slam",
+                    "Vaal Impurity of Fire",
+                    "Vaal Molten Shell",
+                    "Vengeance",
+                    "Vigilant Strike",
+                    "Vitality",
+                    "Vulnerability",
+                    "War Banner",
+                    "Warlord's Mark",
+                    "Arc",
+                    "Arcane Cloak",
+                    "Arcanist Brand",
+                    "Armageddon Brand",
+                    "Assassin's Mark",
+                    "Ball Lightning",
+                    "Bane",
+                    "Blazing Salvo",
+                    "Blight",
+                    "Bodyswap",
+                    "Bone Offering",
+                    "Brand Recall",
+                    "Clarity",
+                    "Cold Snap",
+                    "Conductivity",
+                    "Contagion",
+                    "Conversion Trap",
+                    "Convocation",
+                    "Crackling Lance",
+                    "Creeping Frost",
+                    "Dark Pact",
+                    "Despair",
+                    "Discharge",
+                    "Discipline",
+                    "Divine Ire",
+                    "Elemental Weakness",
+                    "Enfeeble",
+                    "Essence Drain",
+                    "Fireball",
+                    "Firestorm",
+                    "Flame Dash",
+                    "Flame Surge",
+                    "Flame Wall",
+                    "Flameblast",
+                    "Flammability",
+                    "Flesh Offering",
+                    "Freezing Pulse",
+                    "Frost Bomb",
+                    "Frost Shield",
+                    "Frost Wall",
+                    "Frostbite",
+                    "Frostblink",
+                    "Frostbolt",
+                    "Glacial Cascade",
+                    "Herald of Thunder",
+                    "Hexblast",
+                    "Hydrosphere",
+                    "Ice Nova",
+                    "Ice Spear",
+                    "Icicle Mine",
+                    "Incinerate",
+                    "Kinetic Blast",
+                    "Kinetic Bolt",
+                    "Lightning Spire Trap",
+                    "Lightning Tendrils",
+                    "Lightning Trap",
+                    "Lightning Warp",
+                    "Malevolence",
+                    "Orb of Storms",
+                    "Penance Brand",
+                    "Power Siphon",
+                    "Purifying Flame",
+                    "Purity of Elements",
+                    "Purity of Lightning",
+                    "Pyroclast Mine",
+                    "Raise Spectre",
+                    "Raise Zombie",
+                    "Righteous Fire",
+                    "Rolling Magma",
+                    "Scorching Ray",
+                    "Shock Nova",
+                    "Sigil of Power",
+                    "Siphoning Trap",
+                    "Soulrend",
+                    "Spark",
+                    "Spellslinger",
+                    "Spirit Offering",
+                    "Storm Brand",
+                    "Storm Burst",
+                    "Storm Call",
+                    "Stormbind",
+                    "Stormblast Mine",
+                    "Summon Carrion Golem",
+                    "Summon Chaos Golem",
+                    "Summon Holy Relic",
+                    "Summon Lightning Golem",
+                    "Summon Raging Spirit",
+                    "Summon Skeletons",
+                    "Summon Skitterbots",
+                    "Tempest Shield",
+                    "Vaal Arc",
+                    "Vaal Blight",
+                    "Vaal Clarity",
+                    "Vaal Cold Snap",
+                    "Vaal Discipline",
+                    "Vaal Fireball",
+                    "Vaal Flameblast",
+                    "Vaal Ice Nova",
+                    "Vaal Impurity of Lightning",
+                    "Vaal Lightning Trap",
+                    "Vaal Power Siphon",
+                    "Vaal Righteous Fire",
+                    "Vaal Spark",
+                    "Vaal Storm Call",
+                    "Vaal Summon Skeletons",
+                    "Void Sphere",
+                    "Vortex",
+                    "Wave of Conviction",
+                    "Winter Orb",
+                    "Wintertide Brand",
+                    "Wither",
+                    "Wrath",
+                    "Zealotry",
+                    "Detonate Mines",
+                    "Portal",
+                    "Vaal Breach",
+                ],
+                sortItems(compareString) {
+                    Alpine.store("things").items.sort((a, b) => {
+                        const value = similarity(compareString, b) - similarity(compareString, a)
+                        // console.log(a, similarity(compareString, a), b, similarity(compareString, b), value)
+                        return value
+                    })
+                },
+            })
+        })
+
+        //#region stolen
+        function similarity(s1, s2) {
+            var longer = s1;
+            var shorter = s2;
+            if (s1.length < s2.length) {
+                longer = s2;
+                shorter = s1;
+            }
+            var longerLength = longer.length;
+            if (longerLength == 0) {
+                return 1.0;
+            }
+            return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+        }
+
+        function editDistance(s1, s2) {
+            s1 = s1.toLowerCase();
+            s2 = s2.toLowerCase();
+
+            var costs = new Array();
+            for (var i = 0; i <= s1.length; i++) {
+                var lastValue = i;
+                for (var j = 0; j <= s2.length; j++) {
+                    if (i == 0)
+                        costs[j] = j;
+                    else {
+                        if (j > 0) {
+                            var newValue = costs[j - 1];
+                            if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                                newValue = Math.min(Math.min(newValue, lastValue),
+                                    costs[j]) + 1;
+                            costs[j - 1] = lastValue;
+                            lastValue = newValue;
+                        }
+                    }
+                }
+                if (i > 0)
+                    costs[s2.length] = lastValue;
+            }
+            return costs[s2.length];
+        }
+        //#endregion
+
+    </script>
+    <style>
+        .treebutton {
+            font-size: xx-large;
+            border-radius: 15px;
+            padding: 4px;
+            border: 1px solid black;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 1px dotted black;
+        }
+
+        .tabs>button {
+            border: 1px solid black;
+            border-radius: 10px 10px 0 0;
+            border-bottom: none;
+            padding: 4px;
+        }
+
+        .active-tab {
+            background: lightcyan;
+        }
+
+        .list {
+            height: 12em;
+            overflow: hidden;
+            border-bottom: 1px dotted black;
+            transition: height 300ms ease-in-out;
+        }
+
+        .listAll {
+            height: 118.7em;
+        }
+    </style>
+</body>
+
+</html>
