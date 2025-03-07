@@ -14,6 +14,14 @@ MODEL_OPTIONS = sorted([x.model.split(":")[0] for x in ollama_list().models if x
 
 SAVE_FILE_PATH = os.path.join(os.path.expanduser("~"), "pythonaichatpreferences.json")
 
+gui_console_lines: list[str] = []
+_default_print_function = print
+def print(*args, **kwargs):
+    _default_print_function(*args, **kwargs)
+    gui_console_lines.append(" ".join(args))
+    _default_print_function("THIS HAPPENED")
+
+
 def load_save_data() -> dict[str, typing.Any]:
     try:
         with open(SAVE_FILE_PATH, "r") as f:
@@ -210,6 +218,25 @@ class ChatArea(QScrollArea):
                 break
 
 
+class ConsoleWidget(QTextEdit):
+    """A QTextEdit that displays the console output"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setReadOnly(True)
+        self.setText("\n".join(gui_console_lines))
+        global print
+        
+        def print_override(*args, **kwargs):
+            global _default_print_function
+            _default_print_function(*args, **kwargs)
+            gui_console_lines.append(" ".join(args))
+            _default_print_function("NEW BETTER PRINT")
+            self.setText("\n".join(gui_console_lines))
+        
+        print = print_override
+
+
 class MainWindow(QMainWindow):
     """Chat window"""
 
@@ -221,7 +248,14 @@ class MainWindow(QMainWindow):
 
         # Main widget and layout
         main_widget = QWidget()
-        main_layout = QVBoxLayout(main_widget)
+        top_level_layout = QHBoxLayout(main_widget) # Has core content and console
+        main_layout = QVBoxLayout()        
+        top_level_layout.addLayout(main_layout)
+        
+        self.console_widget = ConsoleWidget()
+        self.console_widget.setFixedWidth(600)
+        self.console_widget.setVisible(False)
+        top_level_layout.addWidget(self.console_widget)
 
         # Chat area (top section)
         self.chat_area = ChatArea()
@@ -257,23 +291,20 @@ class MainWindow(QMainWindow):
         self.prompt_button.clicked.connect(self.pull_response)
         self.print_button = QPushButton("Print")
         self.print_button.clicked.connect(self.print_messages)
+        self.console_toggle_button = QPushButton("Console")
+        self.console_toggle_button.clicked.connect(self.toggle_console)
 
         self.button_layout.addWidget(self.send_button)
         self.button_layout.addWidget(self.prompt_button)
         self.button_layout.addWidget(self.print_button)
+        self.button_layout.addWidget(self.console_toggle_button)
 
         input_layout.addWidget(self.input_text)
         input_layout.addLayout(self.button_layout)
         bottom_layout.addLayout(input_layout)
-
         main_layout.addWidget(bottom_widget)
 
         self.setCentralWidget(main_widget)
-
-        # Add some example messages
-        start_with_message = False
-        if start_with_message:
-            self.chat_area.add_message("Hello! How can I help you today?", role="assistant")
 
     def send_message(self):
         """Send a message from the input area"""
@@ -327,6 +358,11 @@ class MainWindow(QMainWindow):
         for message in self.chat_area.messages:
             print(f"{message.role}: {message.text_edit.toPlainText()}")
         print("--------------------------------")
+    
+    def toggle_console(self):
+        """Toggle the console visibility"""
+        current_visible = self.console_widget.isVisible()
+        self.console_widget.setVisible(not current_visible)
 
     def simulate_ai_response(self, user_message, model):
         """Simulate an AI response (for demonstration)"""
