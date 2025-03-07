@@ -8,7 +8,7 @@ from ollama import chat as ollama_chat, list as ollama_list
 import typing
 import json
 import os
-from typing import List, Dict, Literal
+from typing import List, Dict, Literal, Optional
 
 MODEL_OPTIONS = sorted([x.model.split(":")[0] for x in ollama_list().models if x.model])
 
@@ -18,14 +18,19 @@ gui_console_lines: list[str] = []
 _default_print_function = print
 def print(*args, **kwargs):
     _default_print_function(*args, **kwargs)
-    gui_console_lines.append(" ".join(args))
-    _default_print_function("THIS HAPPENED")
+    gui_console_lines.append(" ".join(str(x) for x in args))
 
 
 def load_save_data() -> dict[str, typing.Any]:
     try:
         with open(SAVE_FILE_PATH, "r") as f:
-            return json.load(f)
+            save_data = json.load(f)
+            print(f"Loaded save data {SAVE_FILE_PATH}:")
+            lines = json.dumps(save_data, indent=2)
+            for line in lines.split("\n"):
+                print(line)
+            print()
+            return save_data
     except FileNotFoundError:
         return {}
 
@@ -106,6 +111,9 @@ class MessageWidget(QFrame):
     def delete_message(self):
         """Delete the message"""
         self.delete_signal.emit(self.message_id)
+    
+    def recalculate_height(self):
+        self.text_edit.adjust_height()
 
 
 class AutoResizingTextEdit(QTextEdit):
@@ -230,8 +238,7 @@ class ConsoleWidget(QTextEdit):
         def print_override(*args, **kwargs):
             global _default_print_function
             _default_print_function(*args, **kwargs)
-            gui_console_lines.append(" ".join(args))
-            _default_print_function("NEW BETTER PRINT")
+            gui_console_lines.append(" ".join(str(x) for x in args))
             self.setText("\n".join(gui_console_lines))
         
         print = print_override
@@ -342,15 +349,19 @@ class MainWindow(QMainWindow):
         QApplication.processEvents()
         
         str_builder = ""
-        for chunk in response:
-            if chunk.message.content:
-                str_builder += chunk.message.content
-                # Update the message text as chunks arrive
-                message_widget.text_edit.setPlainText(str_builder)
-                # Process UI events to keep the interface responsive
-                QApplication.processEvents()
-                # Ensure the latest content is visible
-                self.chat_area.scroll_to_bottom()
+        try:
+            for chunk in response:
+                if chunk.message.content:
+                    str_builder += chunk.message.content
+                    # Update the message text as chunks arrive
+                    message_widget.text_edit.setPlainText(str_builder)
+                    # Process UI events to keep the interface responsive
+                    QApplication.processEvents()
+                    # Ensure the latest content is visible
+                    self.chat_area.scroll_to_bottom()
+        except Exception as e:
+            print(f"Error while streaming response: {e}")
+            self.show_console()
 
     def print_messages(self):
         """Print the messages to the console"""
@@ -358,12 +369,18 @@ class MainWindow(QMainWindow):
         for message in self.chat_area.messages:
             print(f"{message.role}: {message.text_edit.toPlainText()}")
         print("--------------------------------")
+        self.show_console()
     
     def toggle_console(self):
-        """Toggle the console visibility"""
+        """Toggle the console visibility or if state is provided, set it to the given state"""
         current_visible = self.console_widget.isVisible()
         self.console_widget.setVisible(not current_visible)
-
+        for message in self.chat_area.messages:
+            message.recalculate_height()
+    
+    def show_console(self):
+        self.console_widget.setVisible(True)
+        
     def simulate_ai_response(self, user_message, model):
         """Simulate an AI response (for demonstration)"""
         # In a real app, this would call an API
@@ -372,6 +389,7 @@ class MainWindow(QMainWindow):
     
     def on_model_changed(self, model: str):
         save_data["model"] = model
+        save_save_data(save_data)
 
 
 if __name__ == "__main__":
