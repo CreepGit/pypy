@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
                            QScrollArea, QTextEdit, QHBoxLayout, QComboBox, QLabel, QFrame, QSizePolicy)
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QSize
 from PyQt6.QtGui import QColor, QPalette
 
 from ollama import chat as ollama_chat, list as ollama_list
@@ -8,6 +8,7 @@ from ollama import chat as ollama_chat, list as ollama_list
 import typing
 import json
 import os
+from typing import List, Dict, Literal
 
 MODEL_OPTIONS = sorted([x.model.split(":")[0] for x in ollama_list().models if x.model])
 
@@ -40,7 +41,7 @@ class MessageWidget(QFrame):
     edited = pyqtSignal(str, int)  # Signal to emit when message is edited (new_text, message_id)
     delete_signal = pyqtSignal(int)  # Signal to emit when message is deleted (message_id)
 
-    def __init__(self, text, role: str, message_id, parent=None):
+    def __init__(self, text: str, role: str, message_id: int, parent=None):
         super().__init__(parent)
         self.message_id = message_id
         self.role = role
@@ -102,7 +103,7 @@ class MessageWidget(QFrame):
 class AutoResizingTextEdit(QTextEdit):
     """A QTextEdit that automatically adjusts its height to fit its content"""
 
-    def __init__(self, text="", parent=None):
+    def __init__(self, text:str="", parent=None):
         super().__init__(parent)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
@@ -130,7 +131,7 @@ class AutoResizingTextEdit(QTextEdit):
             # Fallback if any error occurs
             pass
 
-    def sizeHint(self):
+    def sizeHint(self) -> QSize:
         """Override sizeHint to provide a better default size"""
         size = super().sizeHint()
         try:
@@ -169,7 +170,7 @@ class ChatArea(QScrollArea):
         self.messages: list[MessageWidget] = []
         self.next_message_id = 0
 
-    def add_message(self, text: str, role: typing.Literal["user", "assistant", "system"]):
+    def add_message(self, text: str, role: Literal["user", "assistant", "system"]) -> MessageWidget:
         """Add a new message to the chat"""
         if text.lower().startswith("s:"):
             role = "system"
@@ -193,12 +194,12 @@ class ChatArea(QScrollArea):
         if scrollbar:
             scrollbar.setValue(scrollbar.maximum())
 
-    def on_message_edited(self, new_text, message_id):
+    def on_message_edited(self, new_text: str, message_id: int):
         """Handle when a message is edited"""
         # This could be used to update a message store or trigger other actions
         pass
 
-    def on_message_deleted(self, message_id):
+    def on_message_deleted(self, message_id: int):
         """Handle when a message is deleted"""
         # Find the message widget by its ID and remove it from the layout and the messages list
         for i, message_widget in enumerate(self.messages):
@@ -288,7 +289,7 @@ class MainWindow(QMainWindow):
 
     def pull_response(self):
         """Send a prompt from the input area"""
-        ollama_messages = []
+        ollama_messages: List[Dict[str, str]] = []
         selected_model = self.model_combo.currentText()
 
         for message in self.chat_area.messages:
@@ -297,17 +298,28 @@ class MainWindow(QMainWindow):
                 "content": message.text_edit.toPlainText()
             })
 
+        # Create an empty assistant message first
+        message_widget = self.chat_area.add_message("", role="assistant")
+
         response = ollama_chat(
             model=selected_model,
             messages=ollama_messages,
             stream=True
         )
 
+        # Process UI events to ensure the message widget is displayed
+        QApplication.processEvents()
+        
         str_builder = ""
         for chunk in response:
             if chunk.message.content:
                 str_builder += chunk.message.content
-        self.chat_area.add_message(str_builder, role="assistant")
+                # Update the message text as chunks arrive
+                message_widget.text_edit.setPlainText(str_builder)
+                # Process UI events to keep the interface responsive
+                QApplication.processEvents()
+                # Ensure the latest content is visible
+                self.chat_area.scroll_to_bottom()
 
     def print_messages(self):
         """Print the messages to the console"""
