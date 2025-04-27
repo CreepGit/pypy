@@ -10,7 +10,7 @@ import json
 import os
 from typing import List, Dict, Literal, Optional
 
-MODEL_OPTIONS = sorted([x.model.split(":")[0] for x in ollama_list().models if x.model])
+MODEL_OPTIONS = sorted([x.model.replace(":latest", "") for x in ollama_list().models if x.model])
 
 SAVE_FILE_PATH = os.path.join(os.path.expanduser("~"), "pythonaichatpreferences.json")
 
