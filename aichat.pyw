@@ -1,14 +1,26 @@
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
-                           QScrollArea, QTextEdit, QHBoxLayout, QComboBox, QLabel, QFrame, QSizePolicy)
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QSize
-from PyQt6.QtGui import QColor, QPalette
 
-from ollama import chat as ollama_chat, list as ollama_list
+try:
+    from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
+                            QScrollArea, QTextEdit, QHBoxLayout, QComboBox, QLabel, QFrame, QSizePolicy)
+    from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QSize
+    from PyQt6.QtGui import QColor, QPalette
 
-import typing
-import json
-import os
-from typing import List, Dict, Literal, Optional
+    from ollama import chat as ollama_chat, list as ollama_list
+
+    import typing
+    import json
+    import os
+    from typing import List, Dict, Literal, Optional
+except ImportError as error:
+    import tkinter as tk
+    from tkinter import messagebox
+    root = tk.Tk()
+    root.withdraw()
+    messagebox.showerror(
+        "Missing Dependencies",
+        f"Failed to import required packages. Please install them with pip:\n\n{str(error)}"
+    )
+    exit(1)
 
 MODEL_OPTIONS = sorted([x.model.replace(":latest", "") for x in ollama_list().models if x.model])
 
