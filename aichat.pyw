@@ -123,7 +123,7 @@ class MessageWidget(QFrame):
     def delete_message(self):
         """Delete the message"""
         self.delete_signal.emit(self.message_id)
-    
+
     def recalculate_height(self):
         self.text_edit.adjust_height()
 
@@ -240,19 +240,19 @@ class ChatArea(QScrollArea):
 
 class ConsoleWidget(QTextEdit):
     """A QTextEdit that displays the console output"""
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setReadOnly(True)
         self.setText("\n".join(gui_console_lines))
         global print
-        
+
         def print_override(*args, **kwargs):
             global _default_print_function
             _default_print_function(*args, **kwargs)
             gui_console_lines.append(" ".join(str(x) for x in args))
             self.setText("\n".join(gui_console_lines))
-        
+
         print = print_override
 
 
@@ -268,9 +268,9 @@ class MainWindow(QMainWindow):
         # Main widget and layout
         main_widget = QWidget()
         top_level_layout = QHBoxLayout(main_widget) # Has core content and console
-        main_layout = QVBoxLayout()        
+        main_layout = QVBoxLayout()
         top_level_layout.addLayout(main_layout)
-        
+
         self.console_widget = ConsoleWidget()
         self.console_widget.setFixedWidth(600)
         self.console_widget.setVisible(False)
@@ -359,7 +359,7 @@ class MainWindow(QMainWindow):
 
         # Process UI events to ensure the message widget is displayed
         QApplication.processEvents()
-        
+
         str_builder = ""
         try:
             for chunk in response:
@@ -382,23 +382,25 @@ class MainWindow(QMainWindow):
             print(f"{message.role}: {message.text_edit.toPlainText()}")
         print("--------------------------------")
         self.show_console()
-    
+
     def toggle_console(self):
         """Toggle the console visibility or if state is provided, set it to the given state"""
         current_visible = self.console_widget.isVisible()
         self.console_widget.setVisible(not current_visible)
-        for message in self.chat_area.messages:
-            message.recalculate_height()
-    
+        def recalc_all():
+            for message in self.chat_area.messages:
+                message.recalculate_height()
+        QTimer.singleShot(50, recalc_all)
+
     def show_console(self):
         self.console_widget.setVisible(True)
-        
+
     def simulate_ai_response(self, user_message, model):
         """Simulate an AI response (for demonstration)"""
         # In a real app, this would call an API
         response = f"You selected the {model} model. This is a simulated response to: '{user_message}'"
         self.chat_area.add_message(response, role="assistant")
-    
+
     def on_model_changed(self, model: str):
         save_data["model"] = model
         save_save_data(save_data)
